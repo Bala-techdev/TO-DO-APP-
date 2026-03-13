@@ -1,35 +1,101 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../Style/home.css';
+import {
+  getTodos,
+  createTodo,
+  updateTodo,
+  deleteTodo,
+} from '../../api/todoApi';
 
 const Home = () => {
   const [tasks, setTasks] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleAdd = () => {
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const todos = await getTodos();
+        // Some backends return { data: [...] } or { todos: [...] }.
+        const normalized =
+          Array.isArray(todos)
+            ? todos
+            : Array.isArray(todos?.data)
+            ? todos.data
+            : Array.isArray(todos?.todos)
+            ? todos.todos
+            : [];
+
+        setTasks(normalized);
+      } catch (err) {
+        setError('Could not load tasks.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, []);
+
+  const handleAdd = async () => {
     const trimmed = inputValue.trim();
     if (trimmed === '') return;
-    setTasks(prev => [
-      ...prev,
-      { id: Date.now(), text: trimmed }
-    ]);
-    setInputValue('');
+
+    try {
+      const created = await createTodo({ text: trimmed });
+      const normalized =
+        Array.isArray(created)
+          ? created
+          : created?.data
+          ? created.data
+          : created;
+
+      setTasks(prev =>
+        Array.isArray(normalized) ? normalized : [...prev, normalized]
+      );
+      setInputValue('');
+    } catch (err) {
+      setError('Could not create task.');
+      console.error(err);
+    }
   };
 
-  const handleDelete = id => {
-    setTasks(prev => prev.filter(t => t.id !== id));
-    if (editingId === id) setEditingId(null);
+  const handleDelete = async id => {
+    try {
+      await deleteTodo(id);
+      setTasks(prev => prev.filter(t => t.id !== id));
+      if (editingId === id) setEditingId(null);
+    } catch (err) {
+      setError('Could not delete task.');
+      console.error(err);
+    }
   };
 
   const handleEditStart = id => {
     setEditingId(id);
   };
 
-  const handleEditSave = (id, newText) => {
-    setTasks(prev =>
-      prev.map(t => (t.id === id ? { ...t, text: newText } : t))
-    );
-    setEditingId(null);
+  const handleEditSave = async (id, newText) => {
+    try {
+      const updated = await updateTodo(id, { text: newText });
+      const normalized = updated?.data ? updated.data : updated;
+      setTasks(prev =>
+        prev.map(t =>
+          t.id === id
+            ? { ...t, text: normalized?.text ?? newText }
+            : t
+        )
+      );
+      setEditingId(null);
+    } catch (err) {
+      setError('Could not update task.');
+      console.error(err);
+    }
   };
 
   return (
@@ -59,12 +125,18 @@ const Home = () => {
             onChange={e => setInputValue(e.target.value)}
             placeholder="Add new task..."
             onKeyDown={e => e.key === 'Enter' && handleAdd()}
+            disabled={loading}
           />
-          <button className="button" onClick={handleAdd}>Add</button>
+          <button className="button" onClick={handleAdd} disabled={loading}>
+            Add
+          </button>
         </div>
 
+        {error && <p className="error-message">{error}</p>}
+        {loading && <p className="loading-message">Loading tasks…</p>}
+
         <ul className="todo-list">
-          {tasks.map(task => (
+          {(Array.isArray(tasks) ? tasks : []).map(task => (
             <li key={task.id} className="todo-item">
               {editingId === task.id ? (
                 <EditForm
