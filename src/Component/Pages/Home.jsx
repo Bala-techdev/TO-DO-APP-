@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import '../Style/home.css';
+import Navbar from '../Navbar';
 import {
   getTodos,
   createTodo,
@@ -93,15 +93,7 @@ const Home = () => {
 
   return (
     <div className="container">
-      {/* Navigation bar */}
-      <nav className="navbar">
-        <h1 className="app-title">My To‑Do App</h1>
-        <ul className="nav-links">
-          <li><Link to="/" className="nav-link">Home</Link></li>
-          <li><Link to="/login" className="nav-link">Login</Link></li>
-          <li><Link to="/register" className="nav-link">Register</Link></li>
-        </ul>
-      </nav>
+      <Navbar />
 
       {/* Main heading */}
       <header className="page-header">

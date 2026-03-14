@@ -21,17 +21,14 @@
 //   const response = await axios.delete(`${API_URL}/${id}`);
 //   return response.data;
 // }
-import axios from "axios";
+import client from './authApi';
 
-const API = "http://localhost:8080/api/todos";
+// client baseURL is http://localhost:8080/api
+export const getTodos = () => client.get('/todos').then(res => res.data);
 
-export const getTodos = () => axios.get(API).then(res => res.data);
-
-export const createTodo = todo =>
-  axios.post(API, todo).then(res => res.data);
+export const createTodo = todo => client.post('/todos', todo).then(res => res.data);
 
 export const updateTodo = (id, todo) =>
-  axios.put(`${API}/${id}`, todo).then(res => res.data);
+  client.put(`/todos/${id}`, todo).then(res => res.data);
 
-export const deleteTodo = id =>
-  axios.delete(`${API}/${id}`);
+export const deleteTodo = id => client.delete(`/todos/${id}`).then(res => res.data);

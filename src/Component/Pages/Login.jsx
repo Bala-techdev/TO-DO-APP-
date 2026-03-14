@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../Style/home.css';
+import Navbar from '../Navbar';
+import { login as apiLogin, setAuthToken } from '../../api/authApi';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -14,20 +16,25 @@ const Login = () => {
       setError('Please enter email and password');
       return;
     }
-    const user = { email: email.trim() };
-    localStorage.setItem('user', JSON.stringify(user));
-    navigate('/profile');
+    (async () => {
+      try {
+        const data = await apiLogin({ email: email.trim(), password });
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+          setAuthToken(data.token);
+        }
+        if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+        navigate('/');
+      } catch (err) {
+        setError(err?.response?.data?.message || 'Login failed');
+        console.error(err);
+      }
+    })();
   };
 
   return (
     <div className="container">
-      <nav className="navbar">
-        <h1 className="app-title">My To‑Do App</h1>
-        <ul className="nav-links">
-          <li><Link to="/" className="nav-link">Home</Link></li>
-          <li><Link to="/register" className="nav-link">Register</Link></li>
-        </ul>
-      </nav>
+      <Navbar />
 
       <header className="page-header">
         <h2 className="page-title">Login</h2>

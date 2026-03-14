@@ -1,34 +1,42 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../Style/home.css';
+import Navbar from '../Navbar';
+import { register as apiRegister } from '../../api/authApi';
 
 const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
+    setError(null);
     if (!name.trim() || !email.trim() || !password.trim()) {
       setError('Please fill all fields');
       return;
     }
-    const user = { name: name.trim(), email: email.trim() };
-    localStorage.setItem('user', JSON.stringify(user));
-    navigate('/profile');
+    setLoading(true);
+    try {
+      // call backend register endpoint
+      await apiRegister({ name: name.trim(), email: email.trim(), password });
+
+      // navigate to OTP verification page and pass the email via state
+      navigate('/verify', { state: { email: email.trim() } });
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Registration failed');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="container">
-      <nav className="navbar">
-        <h1 className="app-title">My To‑Do App</h1>
-        <ul className="nav-links">
-          <li><Link to="/" className="nav-link">Home</Link></li>
-          <li><Link to="/login" className="nav-link">Login</Link></li>
-        </ul>
-      </nav>
+      <Navbar />
 
       <header className="page-header">
         <h2 className="page-title">Register</h2>
@@ -41,7 +49,7 @@ const Register = () => {
             <input placeholder="Full name" value={name} onChange={e=>setName(e.target.value)} />
             <input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
             <input placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
-            <button className="button" type="submit">Register</button>
+            <button className="button" type="submit" disabled={loading}>{loading ? 'Registering…' : 'Register'}</button>
           </div>
         </form>
         {error && <p className="error-message">{error}</p>}
