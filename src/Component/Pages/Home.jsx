@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import '../Style/home.css';
 import {
   getTodos,
@@ -23,11 +24,11 @@ const Home = () => {
         // Some backends return { data: [...] } or { todos: [...] }.
         const normalized =
           Array.isArray(todos)
-            ? todos
+            ? todos.map(t => ({ id: t.id, text: t.title }))
             : Array.isArray(todos?.data)
-            ? todos.data
+            ? todos.data.map(t => ({ id: t.id, text: t.title }))
             : Array.isArray(todos?.todos)
-            ? todos.todos
+            ? todos.todos.map(t => ({ id: t.id, text: t.title }))
             : [];
 
         setTasks(normalized);
@@ -47,17 +48,9 @@ const Home = () => {
     if (trimmed === '') return;
 
     try {
-      const created = await createTodo({ text: trimmed });
-      const normalized =
-        Array.isArray(created)
-          ? created
-          : created?.data
-          ? created.data
-          : created;
-
-      setTasks(prev =>
-        Array.isArray(normalized) ? normalized : [...prev, normalized]
-      );
+      const created = await createTodo({ title: trimmed });
+      const normalized = created?.data ? created.data : created;
+      setTasks(prev => [...prev, { id: normalized.id, text: normalized.title }]);
       setInputValue('');
     } catch (err) {
       setError('Could not create task.');
@@ -82,12 +75,12 @@ const Home = () => {
 
   const handleEditSave = async (id, newText) => {
     try {
-      const updated = await updateTodo(id, { text: newText });
+      const updated = await updateTodo(id, { title: newText });
       const normalized = updated?.data ? updated.data : updated;
       setTasks(prev =>
         prev.map(t =>
           t.id === id
-            ? { ...t, text: normalized?.text ?? newText }
+            ? { ...t, text: normalized?.title ?? newText }
             : t
         )
       );
@@ -104,9 +97,9 @@ const Home = () => {
       <nav className="navbar">
         <h1 className="app-title">My To‑Do App</h1>
         <ul className="nav-links">
-          <li><a href="#" className="nav-link">Home</a></li>
-          <li><a href="#" className="nav-link">About</a></li>
-          <li><a href="#" className="nav-link">Contact</a></li>
+          <li><Link to="/" className="nav-link">Home</Link></li>
+          <li><Link to="/login" className="nav-link">Login</Link></li>
+          <li><Link to="/register" className="nav-link">Register</Link></li>
         </ul>
       </nav>
 
