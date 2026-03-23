@@ -27,7 +27,15 @@ const Register = () => {
       // navigate to OTP verification page and pass the email via state
       navigate('/verify', { state: { email: email.trim() } });
     } catch (err) {
-      setError(err?.response?.data?.message || 'Registration failed');
+      const status = err?.response?.status;
+      const serverMsg = err?.response?.data?.message || err?.response?.data;
+      if (status === 409 || (typeof serverMsg === 'string' && serverMsg.toLowerCase().includes('duplicate'))) {
+        setError('This email is already registered. Please login instead.');
+      } else if (status === 500 && typeof err?.response?.data === 'string' && err.response.data.toLowerCase().includes('duplicate')) {
+        setError('This email is already registered. Please login instead.');
+      } else {
+        setError(typeof serverMsg === 'string' ? serverMsg : 'Registration failed. Please try again.');
+      }
       console.error(err);
     } finally {
       setLoading(false);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import '../Style/home.css';
+import './Style/home.css';
 import { setAuthToken } from '../api/authApi';
 
 export default function Navbar() {
